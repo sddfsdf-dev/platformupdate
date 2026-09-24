@@ -1,0 +1,961 @@
+<title>Nubo</title>
+<style>
+  :root{
+    --bg:#f5f4f1;
+    --surface:#ffffff;
+    --surface-2:#eeece7;
+    --ink:#1c1d1f;
+    --ink-soft:#5c5e63;
+    --ink-faint:#94969c;
+    --line:#e2e0da;
+    --accent:#0e9f8b;
+    --accent-ink:#04352d;
+    --accent-soft:#d9f2ec;
+    --coral:#ff6b5b;
+    --coral-soft:#ffe3df;
+    --gold:#e6a817;
+    --shadow:0 18px 40px -20px rgba(28,29,31,.28);
+    --radius-lg:28px;
+    --radius-md:16px;
+    --radius-sm:10px;
+    color-scheme:light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#131417;
+      --surface:#1c1e22;
+      --surface-2:#24262b;
+      --ink:#f1f1ef;
+      --ink-soft:#b7b8bd;
+      --ink-faint:#7b7d83;
+      --line:#313339;
+      --accent:#2fd4b8;
+      --accent-ink:#04352d;
+      --accent-soft:#173832;
+      --coral:#ff8577;
+      --coral-soft:#3a2320;
+      --gold:#f0bb3f;
+      --shadow:0 18px 40px -18px rgba(0,0,0,.6);
+      color-scheme:dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#131417;
+    --surface:#1c1e22;
+    --surface-2:#24262b;
+    --ink:#f1f1ef;
+    --ink-soft:#b7b8bd;
+    --ink-faint:#7b7d83;
+    --line:#313339;
+    --accent:#2fd4b8;
+    --accent-ink:#04352d;
+    --accent-soft:#173832;
+    --coral:#ff8577;
+    --coral-soft:#3a2320;
+    --gold:#f0bb3f;
+    --shadow:0 18px 40px -18px rgba(0,0,0,.6);
+    color-scheme:dark;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Manrope',system-ui,-apple-system,sans-serif;
+    padding-inline:16px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:22px;
+  }
+  h1,h2,h3{font-family:'Sora',system-ui,sans-serif; text-wrap:balance; margin:0;}
+
+  .page-head{max-width:460px; text-align:center; padding-top:28px;}
+  .page-head .eyebrow{
+    font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent); font-weight:700; margin-bottom:8px;
+  }
+  .page-head h1{font-size:26px;}
+  .page-head p{color:var(--ink-soft); font-size:14px; line-height:1.55; margin-top:8px;}
+
+  /* ---------- phone frame ---------- */
+  .device{
+    width:100%; max-width:390px; height:min(780px, 82vh);
+    background:var(--surface);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow);
+    border:1px solid var(--line);
+    overflow:hidden;
+    position:relative;
+    display:flex; flex-direction:column;
+  }
+  .screen{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column;
+    opacity:0; pointer-events:none;
+    transition:opacity .25s ease;
+  }
+  .screen.active{opacity:1; pointer-events:auto;}
+
+  .status-chip{
+    position:absolute; top:14px; right:14px; z-index:5;
+    font-family:'JetBrains Mono',monospace; font-size:10px;
+    letter-spacing:.04em; padding:5px 9px; border-radius:999px;
+    background:var(--surface-2); color:var(--ink-faint);
+    border:1px solid var(--line);
+  }
+
+  /* welcome */
+  .welcome{align-items:center; justify-content:center; text-align:center; padding:32px; gap:18px;}
+  .logo-mark{
+    width:64px; height:64px; border-radius:20px;
+    background:linear-gradient(155deg,var(--accent),var(--gold));
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Sora',sans-serif; font-weight:700; font-size:26px; color:#fff;
+  }
+  .welcome h2{font-size:24px;}
+  .welcome p{color:var(--ink-soft); font-size:14px; max-width:270px; line-height:1.55;}
+
+  /* generic step chrome */
+  .step{padding:22px 20px 18px; flex:1; display:flex; flex-direction:column; overflow:hidden;}
+  .step-scroll{flex:1; overflow-y:auto; padding-bottom:8px; -webkit-overflow-scrolling:touch;}
+  .step-head{margin-bottom:16px;}
+  .step-head .tag{font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); font-weight:700;}
+  .step-head h3{font-size:19px; margin-top:4px;}
+  .step-head p{color:var(--ink-soft); font-size:13px; margin-top:4px; line-height:1.5;}
+
+  label.field{display:block; margin-bottom:14px;}
+  label.field span.lbl{display:block; font-size:12px; font-weight:700; color:var(--ink-soft); margin-bottom:6px;}
+  input[type=text], select{
+    width:100%; padding:11px 12px; border-radius:var(--radius-sm);
+    border:1px solid var(--line); background:var(--surface-2); color:var(--ink);
+    font-family:inherit; font-size:14px;
+  }
+  input[type=text]:focus, select:focus{outline:2px solid var(--accent); outline-offset:1px;}
+
+  .chip-grid{display:flex; flex-wrap:wrap; gap:8px;}
+  .chip{
+    padding:8px 13px; border-radius:999px; border:1px solid var(--line);
+    background:var(--surface-2); color:var(--ink-soft); font-size:12.5px; font-weight:600;
+    cursor:pointer; user-select:none; transition:.15s;
+  }
+  .chip.on{background:var(--accent); border-color:var(--accent); color:var(--accent-ink);}
+  .chip:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+
+  .swatch-row{display:flex; flex-wrap:wrap; gap:8px;}
+  .swatch{
+    width:30px; height:30px; border-radius:999px; cursor:pointer;
+    border:2px solid transparent; box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);
+  }
+  .swatch.on{border-color:var(--ink); transform:scale(1.08);}
+
+  .opt-row{display:flex; flex-wrap:wrap; gap:8px;}
+  .opt-btn{
+    padding:8px 12px; border-radius:var(--radius-sm); border:1px solid var(--line);
+    background:var(--surface-2); color:var(--ink-soft); font-size:12.5px; font-weight:600; cursor:pointer;
+  }
+  .opt-btn.on{background:var(--ink); color:var(--surface); border-color:var(--ink);}
+
+  .footer{
+    padding:14px 20px; border-top:1px solid var(--line);
+    display:flex; gap:10px; align-items:center; justify-content:space-between;
+    background:var(--surface);
+  }
+  .hint{font-size:11.5px; color:var(--ink-faint);}
+  button{font-family:inherit; cursor:pointer;}
+  .btn{
+    border:none; border-radius:999px; padding:11px 20px; font-size:13.5px; font-weight:700;
+    background:var(--accent); color:var(--accent-ink); transition:.15s;
+  }
+  .btn:disabled{opacity:.4; cursor:not-allowed;}
+  .btn.ghost{background:transparent; color:var(--ink-soft); border:1px solid var(--line);}
+  .btn.wide{width:100%;}
+  .btn.dark{background:var(--ink); color:var(--surface);}
+
+  /* avatar builder */
+  .avatar-preview{display:flex; justify-content:center; margin-bottom:16px;}
+  .avatar-ring{
+    width:104px; height:104px; border-radius:999px; display:flex; align-items:center; justify-content:center;
+    padding:6px; transition:background .2s;
+  }
+  .avatar-ring > div{width:100%; height:100%;}
+  .avatar-ring svg{width:100%; height:100%; display:block;}
+  .avatar-tabs{display:flex; gap:6px; margin-bottom:12px;}
+  .avatar-tab{
+    flex:1; text-align:center; padding:7px 4px; border-radius:var(--radius-sm); font-size:11.5px; font-weight:700;
+    background:var(--surface-2); color:var(--ink-faint); border:1px solid var(--line); cursor:pointer;
+  }
+  .avatar-tab.on{background:var(--ink); color:var(--surface); border-color:var(--ink);}
+  .avatar-pane{display:none;}
+  .avatar-pane.on{display:block;}
+
+  /* review */
+  .profile-card{
+    background:var(--surface-2); border:1px solid var(--line); border-radius:var(--radius-md);
+    padding:18px; display:flex; gap:14px; align-items:center; margin-bottom:14px;
+  }
+  .profile-card .meta h4{font-size:15px; margin:0 0 3px;}
+  .profile-card .meta p{font-size:12px; color:var(--ink-soft); margin:0;}
+  .review-tags{display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;}
+  .review-tags .chip{cursor:default; padding:5px 10px; font-size:11px;}
+  .summary-line{display:flex; justify-content:space-between; font-size:12.5px; padding:7px 0; border-bottom:1px dashed var(--line); color:var(--ink-soft);}
+  .summary-line b{color:var(--ink); font-weight:700;}
+
+  /* feed */
+  .feed-top{
+    padding:14px 16px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:10px;
+  }
+  .feed-top .who{display:flex; align-items:center; gap:9px;}
+  .feed-top .who h4{font-size:13.5px; margin:0;}
+  .feed-top .who span{font-size:11px; color:var(--ink-faint);}
+  .feed-scroll{flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch;}
+  .post{padding:13px 16px; border-bottom:1px solid var(--line); display:flex; gap:10px;}
+  .post-main{flex:1; min-width:0;}
+  .post-head{display:flex; align-items:baseline; gap:5px; flex-wrap:wrap;}
+  .post-head .pn{font-size:14px; font-weight:800; color:var(--ink);}
+  .post-head .ph{font-size:13px; color:var(--ink-faint);}
+  .post-head .pt{font-size:12px; color:var(--ink-faint);}
+  .post-head .pt::before{content:"\00b7"; margin-right:5px;}
+  .post-body{font-size:14px; line-height:1.48; color:var(--ink); margin-top:2px;}
+  .post-like{
+    display:flex; align-items:center; gap:6px; margin-top:9px; font-size:12.5px;
+    color:var(--ink-faint); cursor:pointer; width:fit-content; user-select:none;
+  }
+  .post-like svg{width:16px; height:16px; transition:transform .15s;}
+  .post-like svg path{fill:none; stroke:currentColor; stroke-width:1.8;}
+  .post-like.liked{color:var(--coral);}
+  .post-like.liked svg path{fill:currentColor; stroke:currentColor;}
+  .post-like.liked svg{transform:scale(1.12);}
+  .post.ad-post{background:var(--surface-2);}
+  .post.ad-post .brand-mark{
+    width:34px; height:34px; border-radius:10px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; color:#fff; font-family:'Sora',sans-serif; font-weight:700; font-size:14px;
+  }
+  .post.ad-post .sponsored{
+    font-size:11px; font-weight:700; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.05em;
+  }
+  .post.ad-post .cta{
+    margin-top:10px; display:inline-block; font-size:12px; font-weight:700;
+    color:var(--accent-ink); background:var(--accent); padding:6px 12px; border-radius:999px;
+  }
+
+  .mini-av{width:34px; height:34px; border-radius:999px; flex-shrink:0; display:flex; align-items:center; justify-content:center; padding:2px;}
+  .mini-av svg{width:100%; height:100%;}
+
+  /* update modal */
+  .modal-veil{
+    position:absolute; inset:0; background:rgba(10,10,12,.5);
+    display:flex; align-items:flex-end; z-index:20;
+    opacity:0; pointer-events:none; transition:opacity .2s ease;
+  }
+  .modal-veil.show{opacity:1; pointer-events:auto;}
+  .modal-sheet{
+    width:100%; background:var(--surface); border-radius:22px 22px 0 0;
+    padding:22px 20px 20px; transform:translateY(16px); transition:transform .2s ease;
+    border-top:1px solid var(--line);
+  }
+  .modal-veil.show .modal-sheet{transform:translateY(0);}
+  .modal-icon{
+    width:46px; height:46px; border-radius:14px; background:var(--accent-soft); color:var(--accent);
+    display:flex; align-items:center; justify-content:center; font-size:20px; margin-bottom:12px;
+  }
+  .modal-sheet h3{font-size:17px; margin-bottom:6px;}
+  .modal-sheet p{font-size:13px; color:var(--ink-soft); line-height:1.55; margin-bottom:16px;}
+  .modal-actions{display:flex; flex-direction:column; gap:9px;}
+
+  .updating-veil{
+    position:absolute; inset:0; background:var(--surface); z-index:25;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
+    opacity:0; pointer-events:none; transition:opacity .18s ease;
+  }
+  .updating-veil.show{opacity:1; pointer-events:auto;}
+  .spinner{
+    width:34px; height:34px; border-radius:999px;
+    border:3px solid var(--surface-2); border-top-color:var(--accent);
+    animation:spin .7s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce){ .spinner{ animation:none; border-top-color:var(--surface-2); } }
+  .updating-veil p{font-size:13px; font-weight:700; color:var(--ink-soft);}
+
+  .toast{
+    position:absolute; left:16px; right:16px; bottom:18px; z-index:30;
+    background:var(--ink); color:var(--surface); padding:12px 14px; border-radius:var(--radius-sm);
+    font-size:12.5px; display:flex; align-items:center; gap:9px;
+    opacity:0; transform:translateY(8px); pointer-events:none; transition:.25s ease;
+  }
+  .toast.show{opacity:1; transform:translateY(0);}
+
+  /* researcher controls */
+  .rig{
+    max-width:390px; width:100%; background:var(--surface); border:1px solid var(--line);
+    border-radius:var(--radius-md); padding:16px 18px; margin-top:4px;
+  }
+  .rig h3{font-size:13px; margin-bottom:3px;}
+  .rig .rig-sub{font-size:12px; color:var(--ink-faint); margin-bottom:13px; line-height:1.5;}
+  .rig-row{display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-top:1px solid var(--line);}
+  .rig-row:first-of-type{border-top:none;}
+  .rig-row .rl{font-size:12.5px; font-weight:700;}
+  .rig-row .rd{font-size:11px; color:var(--ink-faint); margin-top:2px;}
+  .switch{
+    width:42px; height:24px; border-radius:999px; background:var(--surface-2); border:1px solid var(--line);
+    position:relative; cursor:pointer; flex-shrink:0;
+  }
+  .switch i{
+    position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:999px;
+    background:var(--ink-faint); transition:.15s;
+  }
+  .switch.on{background:var(--accent-soft); border-color:var(--accent);}
+  .switch.on i{left:20px; background:var(--accent);}
+  .rig-restart{margin-top:12px; width:100%; padding:9px; font-size:12px; border-radius:var(--radius-sm); border:1px solid var(--line); background:var(--surface-2); color:var(--ink-soft); font-weight:700;}
+
+  footer.note{max-width:460px; text-align:center; font-size:11.5px; color:var(--ink-faint); padding-bottom:30px; line-height:1.6;}
+</style>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Manrope:wght@500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+
+<div class="page-head">
+  <div class="eyebrow">Keep My Version &middot; Interactive Stimulus</div>
+  <h1>Nubo</h1>
+  <p>A fictional social app prototype used as the study stimulus. Participants build a profile (or get a default one), browse a short feed, then receive a software update &mdash; with or without the option to keep their current version.</p>
+</div>
+
+<div class="device" id="device">
+
+  <div class="status-chip" id="statusChip">CUSTOM · KEEP</div>
+
+  <!-- WELCOME -->
+  <div class="screen active" data-screen="welcome">
+    <div class="welcome">
+      <div class="logo-mark">N</div>
+      <h2>Welcome to Nubo</h2>
+      <p>A new space to share what you're into. No email, no password &mdash; just set up how you want to show up.</p>
+      <button class="btn wide" id="startBtn" style="width:200px;">Get started</button>
+    </div>
+  </div>
+
+  <!-- BASICS (customization present) -->
+  <div class="screen" data-screen="basics">
+    <div class="step">
+      <div class="step-head">
+        <div class="tag">Step 1 of 3</div>
+        <h3>Tell us a bit about you</h3>
+        <p>This just shapes your profile &mdash; nothing here is used to identify you.</p>
+      </div>
+      <div class="step-scroll">
+        <label class="field">
+          <span class="lbl">Age range</span>
+          <select id="ageSel">
+            <option value="">Select&hellip;</option>
+            <option>18&ndash;24</option>
+            <option>25&ndash;34</option>
+            <option>35&ndash;44</option>
+            <option>45&ndash;54</option>
+            <option>55+</option>
+          </select>
+        </label>
+        <label class="field">
+          <span class="lbl">Gender</span>
+          <div class="opt-row" id="genderRow">
+            <div class="opt-btn" data-val="Woman">Woman</div>
+            <div class="opt-btn" data-val="Man">Man</div>
+            <div class="opt-btn" data-val="Nonbinary">Nonbinary</div>
+            <div class="opt-btn" data-val="Prefer not to say">Prefer not to say</div>
+          </div>
+        </label>
+        <label class="field" style="margin-bottom:6px;">
+          <span class="lbl">Pick a few interests (3+)</span>
+          <div class="chip-grid" id="interestGrid"></div>
+        </label>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="hint" id="basicsHint">Choose at least 3 interests</span>
+      <button class="btn" id="toAvatarBtn" disabled>Next</button>
+    </div>
+  </div>
+
+  <!-- AVATAR (customization present) -->
+  <div class="screen" data-screen="avatar">
+    <div class="step">
+      <div class="step-head">
+        <div class="tag">Step 2 of 3</div>
+        <h3>Build your avatar</h3>
+        <p>Design how your profile looks to others.</p>
+      </div>
+      <div class="step-scroll">
+        <div class="avatar-preview">
+          <div class="avatar-ring" id="avatarRing"><div id="avatarSvgHolder"></div></div>
+        </div>
+        <label class="field">
+          <span class="lbl">Display name</span>
+          <input type="text" id="nameInput" placeholder="e.g. Rivermoss, Kai_29, Solstice&hellip;" maxlength="18">
+        </label>
+        <div class="avatar-tabs">
+          <div class="avatar-tab on" data-pane="skin">Skin</div>
+          <div class="avatar-tab" data-pane="hair">Hair</div>
+          <div class="avatar-tab" data-pane="extra">Extra</div>
+          <div class="avatar-tab" data-pane="ring">Theme</div>
+        </div>
+        <div class="avatar-pane on" data-pane="skin">
+          <div class="swatch-row" id="skinRow"></div>
+        </div>
+        <div class="avatar-pane" data-pane="hair">
+          <div class="opt-row" id="hairStyleRow" style="margin-bottom:10px;"></div>
+          <div class="swatch-row" id="hairColorRow"></div>
+        </div>
+        <div class="avatar-pane" data-pane="extra">
+          <div class="opt-row" id="accessoryRow"></div>
+        </div>
+        <div class="avatar-pane" data-pane="ring">
+          <div class="swatch-row" id="ringRow"></div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <button class="btn ghost" id="backToBasics">Back</button>
+      <button class="btn" id="toReviewBtn" disabled>Review profile</button>
+    </div>
+  </div>
+
+  <!-- ABSENT: brief default-assignment transition -->
+  <div class="screen" data-screen="defaulting">
+    <div class="welcome">
+      <div class="avatar-ring" style="background:var(--surface-2);"><div id="defaultAvatarHolder"></div></div>
+      <h2 style="font-size:18px;">Setting up your profile&hellip;</h2>
+      <p>You've been assigned a standard Nubo profile to get started quickly.</p>
+    </div>
+  </div>
+
+  <!-- REVIEW -->
+  <div class="screen" data-screen="review">
+    <div class="step">
+      <div class="step-head">
+        <div class="tag" id="reviewTag">Step 3 of 3</div>
+        <h3>Your profile</h3>
+        <p>Here's how you'll appear on Nubo.</p>
+      </div>
+      <div class="step-scroll">
+        <div class="profile-card">
+          <div class="avatar-ring" style="width:64px;height:64px;padding:4px;" id="reviewRing"><div id="reviewAvatarHolder"></div></div>
+          <div class="meta">
+            <h4 id="reviewName">&mdash;</h4>
+            <p id="reviewSub">&mdash;</p>
+          </div>
+        </div>
+        <div class="review-tags" id="reviewTags"></div>
+        <div style="margin-top:18px;">
+          <div class="summary-line"><span>Version</span><b>Nubo v1.0</b></div>
+          <div class="summary-line"><span>Profile type</span><b id="reviewType">Customized</b></div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="hint">You can change this later in Settings.</span>
+      <button class="btn" id="toFeedBtn">Enter Nubo</button>
+    </div>
+  </div>
+
+  <!-- FEED -->
+  <div class="screen" data-screen="feed">
+    <div class="feed-top">
+      <div class="avatar-ring" style="width:34px;height:34px;padding:2px;" id="feedRing"><div id="feedAvatarHolder"></div></div>
+      <div class="who">
+        <h4 id="feedName">&mdash;</h4>
+        <span>Home feed</span>
+      </div>
+    </div>
+    <div class="feed-scroll" id="feedScroll"></div>
+  </div>
+
+  <!-- UPDATE MODAL -->
+  <div class="modal-veil" id="updateVeil">
+    <div class="modal-sheet">
+      <div class="modal-icon">&#8635;</div>
+      <h3>Nubo has an update</h3>
+      <p id="modalCopy">A new version of Nubo is ready, with smoother feeds and a refreshed look.</p>
+      <div class="modal-actions" id="modalActions"></div>
+    </div>
+  </div>
+
+  <div class="updating-veil" id="updatingVeil">
+    <div class="spinner"></div>
+    <p>Updating Nubo&hellip;</p>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<div class="rig">
+  <h3>Condition preview (researcher controls)</h3>
+  <div class="rig-sub">참가자에게는 보이지 않는 설정이에요. 아래 두 스위치로 2×2 네 조건을 미리 볼 수 있습니다.</div>
+  <div class="rig-row">
+    <div>
+      <div class="rl">Customization</div>
+      <div class="rd">Presence: 온보딩에서 직접 프로필을 꾸밈 / Absence: 기본 프로필 자동 배정</div>
+    </div>
+    <div class="switch on" id="swCustom"><i></i></div>
+  </div>
+  <div class="rig-row">
+    <div>
+      <div class="rl">Keep the Version</div>
+      <div class="rd">Presence: 업데이트 시 기존 버전 유지 옵션 제공 / Absence: 강제 업데이트</div>
+    </div>
+    <div class="switch on" id="swKeep"><i></i></div>
+  </div>
+  <button class="rig-restart" id="restartBtn">Restart flow with current settings</button>
+</div>
+
+<footer class="note">Nubo is a fictional prototype built for the “Keep My Version” study only. No real accounts, emails, or personal identifiers are collected anywhere in this flow.</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- condition state ---------------- */
+  var cond = { customization:true, keep:true };
+
+  /* ---------------- avatar option data ---------------- */
+  var SKINS = ['#FFE0C2','#F4C2A1','#E0A574','#C68642','#8D5524','#4A2A17'];
+  var HAIR_STYLES = [
+    {id:'bald', label:'None'},
+    {id:'short', label:'Short'},
+    {id:'curly', label:'Curly'},
+    {id:'long', label:'Long'}
+  ];
+  var HAIR_COLORS = ['#241C14','#5B3A24','#B5772E','#D9D9D9','#C23B6B'];
+  var ACCESSORIES = [
+    {id:'none', label:'None'},
+    {id:'glasses', label:'Glasses'},
+    {id:'band', label:'Headband'}
+  ];
+  var RINGS = ['#0E9F8B','#FF6B5B','#5B8DEF','#E6A817','#B15BFF','#FF8FB1'];
+
+  var INTERESTS = ['Music','Travel','Fitness','Gaming','Art','Food','Movies','Books','Tech','Fashion','Sports','Nature','Photography','Writing'];
+
+  var DEFAULT_PROFILE = {
+    name:'nubo_user',
+    skin: SKINS[1],
+    hairStyle:'short',
+    hairColor: HAIR_COLORS[0],
+    accessory:'none',
+    ring: RINGS[0],
+    interests:['Music','Food','Travel']
+  };
+
+  var profile = { name:'', skin:SKINS[1], hairStyle:'short', hairColor:HAIR_COLORS[0], accessory:'none', ring:RINGS[0], interests:[] };
+  var wasCustomized = false; // did THIS session actually go through customization
+
+  /* ---------------- avatar SVG builder ---------------- */
+  function hairPath(style, color){
+    if(style === 'bald') return '';
+    if(style === 'short'){
+      return '<path d="M8 40c-2-20 8-33 26-33s28 13 26 33c-4-10-14-16-26-16S12 30 8 40z" fill="'+color+'"/>';
+    }
+    if(style === 'curly'){
+      return '<g fill="'+color+'">'+
+        '<circle cx="16" cy="20" r="9"/><circle cx="30" cy="12" r="10"/><circle cx="44" cy="20" r="9"/>'+
+        '<circle cx="22" cy="14" r="7"/><circle cx="38" cy="14" r="7"/>'+
+        '</g>';
+    }
+    if(style === 'long'){
+      return '<g fill="'+color+'">'+
+        '<path d="M8 25C6 9 17 2 30 2C43 2 54 9 52 25C48 15 40 11 30 11C20 11 12 15 8 25Z"/>'+
+        '<path d="M9 18C4 26 3 40 6 54C7 58 14 58 14 53C12 42 12 29 16 19Z"/>'+
+        '<path d="M51 18C56 26 57 40 54 54C53 58 46 58 46 53C48 42 48 29 44 19Z"/>'+
+        '</g>';
+    }
+    return '';
+  }
+  function accessoryPath(kind){
+    if(kind === 'glasses'){
+      return '<g fill="none" stroke="#20222a" stroke-width="2.4">'+
+        '<circle cx="21" cy="31" r="8"/><circle cx="39" cy="31" r="8"/><line x1="29" y1="31" x2="31" y2="31"/>'+
+        '</g>';
+    }
+    if(kind === 'band'){
+      return '<rect x="6" y="20" width="48" height="7" rx="3.5" fill="#e6a817"/>';
+    }
+    return '';
+  }
+  function avatarSVG(p){
+    return ''+
+    '<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="avatar">'+
+      '<circle cx="30" cy="30" r="30" fill="'+p.skin+'"/>'+
+      '<circle cx="22" cy="30" r="2.6" fill="#2a2a2a"/>'+
+      '<circle cx="38" cy="30" r="2.6" fill="#2a2a2a"/>'+
+      '<path d="M22 39c3 3 13 3 16 0" stroke="#2a2a2a" stroke-width="2.4" fill="none" stroke-linecap="round"/>'+
+      hairPath(p.hairStyle, p.hairColor)+
+      accessoryPath(p.accessory)+
+    '</svg>';
+  }
+  function renderAvatar(targetId, ringId, p){
+    var el = document.getElementById(targetId);
+    if(el) el.innerHTML = avatarSVG(p);
+    if(ringId){
+      var ring = document.getElementById(ringId);
+      if(ring) ring.style.background = p.ring + '33';
+    }
+  }
+
+  /* ---------------- screen management ---------------- */
+  function showScreen(name){
+    document.querySelectorAll('.screen').forEach(function(s){
+      s.classList.toggle('active', s.getAttribute('data-screen') === name);
+    });
+  }
+
+  function updateStatusChip(){
+    var chip = document.getElementById('statusChip');
+    chip.textContent = (cond.customization ? 'CUSTOM ON' : 'CUSTOM OFF') + ' · ' + (cond.keep ? 'KEEP ON' : 'KEEP OFF');
+  }
+
+  /* ---------------- build option pickers ---------------- */
+  function buildInterestChips(){
+    var grid = document.getElementById('interestGrid');
+    grid.innerHTML = '';
+    INTERESTS.forEach(function(name){
+      var c = document.createElement('div');
+      c.className = 'chip';
+      c.textContent = name;
+      c.tabIndex = 0;
+      c.addEventListener('click', function(){
+        c.classList.toggle('on');
+        var idx = profile.interests.indexOf(name);
+        if(c.classList.contains('on') && idx === -1) profile.interests.push(name);
+        if(!c.classList.contains('on') && idx !== -1) profile.interests.splice(idx,1);
+        validateBasics();
+      });
+      grid.appendChild(c);
+    });
+  }
+
+  function buildSwatches(containerId, colors, key, onPick){
+    var row = document.getElementById(containerId);
+    row.innerHTML = '';
+    colors.forEach(function(c){
+      var d = document.createElement('div');
+      d.className = 'swatch';
+      d.style.background = c;
+      d.addEventListener('click', function(){
+        row.querySelectorAll('.swatch').forEach(function(s){ s.classList.remove('on'); });
+        d.classList.add('on');
+        profile[key] = c;
+        onPick && onPick();
+      });
+      row.appendChild(d);
+    });
+    row.children[0].classList.add('on');
+  }
+
+  function buildOptRow(containerId, items, key, onPick){
+    var row = document.getElementById(containerId);
+    row.innerHTML = '';
+    items.forEach(function(it){
+      var d = document.createElement('div');
+      d.className = 'opt-btn';
+      d.textContent = it.label;
+      d.addEventListener('click', function(){
+        row.querySelectorAll('.opt-btn').forEach(function(s){ s.classList.remove('on'); });
+        d.classList.add('on');
+        profile[key] = it.id;
+        onPick && onPick();
+      });
+      row.appendChild(d);
+    });
+    row.children[0].classList.add('on');
+  }
+
+  function validateBasics(){
+    var ok = document.getElementById('ageSel').value && genderPicked && profile.interests.length >= 3;
+    document.getElementById('toAvatarBtn').disabled = !ok;
+    document.getElementById('basicsHint').textContent = profile.interests.length >= 3
+      ? 'Looks good'
+      : 'Choose at least 3 interests';
+  }
+  var genderPicked = false;
+
+  function validateAvatar(){
+    document.getElementById('toReviewBtn').disabled = !(profile.name && profile.name.trim().length >= 2);
+  }
+
+  /* ---------------- feed ---------------- */
+  var FEED_POSTS = [
+    {name:'Kai Rivera', h:'coastalkai', t:'2h', body:"Tried a new trailhead this morning — the fog rolled in right as the sun came up. Worth the early alarm.", grad:'#0e9f8b', likes:24},
+    {name:'Mira Chen', h:'mira_codes', t:'3h', body:"Finally fixed the bug that's been haunting me for three days. It was a missing semicolon. Of course it was.", grad:'#5b8def', likes:33},
+    {name:'Theo Alvarez', h:'plantdad_theo', t:'5h', body:"My monstera decided to grow a new leaf overnight. Small wins.", grad:'#4c7a3f', likes:12},
+    {name:'Sam Park', h:'noodle_diaries', t:'6h', body:"Made cold sesame noodles from scratch for the first time — the sauce is doing a lot of heavy lifting.", grad:'#e6a817', likes:19},
+    {name:'Aria Ford', h:'river_reads', t:'9h', body:"Halfway through a novel that's quietly wrecking me. No spoilers, just — bring tissues.", grad:'#b15bff', likes:41},
+    {name:'Jun Park', h:'jun_runs', t:'1d', body:"Slow 5k this morning but a 5k is a 5k. Legs are jelly, mood is great.", grad:'#ff6b5b', likes:8}
+  ];
+
+  var AD_POSTS = [
+    {brand:'Fernwell', body:"Sleep better tonight. Fernwell's herbal blend is trusted by over 2 million people worldwide.", grad:'#2f8f5b', cta:'Shop now'},
+    {brand:'Loop', body:'The mattress that ships in a box and ends up in your dreams. Loop — 100-night trial, free returns.', grad:'#3b5fb0', cta:'Learn more'},
+    {brand:'Everline', body:'Switch to Everline and save an average of $412 a year on car insurance. Quotes in 2 minutes.', grad:'#a8631f', cta:'Get a quote'}
+  ];
+
+  var HEART_SVG = '<svg viewBox="0 0 24 24"><path d="M12 21s-7.2-4.6-10-9.3C.3 8.4 1.8 5 5.2 4.3c2.1-.4 4 .6 5.3 2.4C11.8 4.9 13.7 3.9 15.8 4.3c3.4.7 4.9 4.1 3.2 7.4C16.2 16.4 9 21 9 21"/></svg>';
+
+  function organicPostEl(p){
+    var div = document.createElement('div');
+    div.className = 'post';
+    div.innerHTML =
+      '<div class="mini-av" style="background:'+p.grad+'22;"><svg viewBox="0 0 60 60"><circle cx="30" cy="30" r="30" fill="'+p.grad+'"/></svg></div>'+
+      '<div class="post-main">'+
+        '<div class="post-head">'+
+          '<span class="pn">'+p.name+'</span>'+
+          '<span class="ph">@'+p.h+'</span>'+
+          '<span class="pt">'+p.t+'</span>'+
+        '</div>'+
+        '<div class="post-body">'+p.body+'</div>'+
+        '<div class="post-like" data-count="'+p.likes+'">'+HEART_SVG+'<span class="lc">'+p.likes+'</span></div>'+
+      '</div>';
+    var likeEl = div.querySelector('.post-like');
+    likeEl.addEventListener('click', function(){
+      var liked = likeEl.classList.toggle('liked');
+      var base = parseInt(likeEl.getAttribute('data-count'), 10);
+      likeEl.querySelector('.lc').textContent = liked ? base + 1 : base;
+    });
+    return div;
+  }
+
+  function adPostEl(a){
+    var div = document.createElement('div');
+    div.className = 'post ad-post';
+    div.innerHTML =
+      '<div class="brand-mark" style="background:'+a.grad+';">'+a.brand.charAt(0)+'</div>'+
+      '<div class="post-main">'+
+        '<div class="post-head">'+
+          '<span class="pn">'+a.brand+'</span>'+
+          '<span class="sponsored">Sponsored</span>'+
+        '</div>'+
+        '<div class="post-body">'+a.body+'</div>'+
+        '<div class="cta">'+a.cta+'</div>'+
+      '</div>';
+    return div;
+  }
+
+  function buildFeed(withAds){
+    var wrap = document.getElementById('feedScroll');
+    wrap.innerHTML = '';
+    var adIdx = 0;
+    FEED_POSTS.forEach(function(p, i){
+      wrap.appendChild(organicPostEl(p));
+      if(withAds && (i + 1) % 2 === 0 && adIdx < AD_POSTS.length){
+        wrap.appendChild(adPostEl(AD_POSTS[adIdx]));
+        adIdx++;
+      }
+    });
+    wrap.scrollTop = 0;
+  }
+
+  /* ---------------- toast ---------------- */
+  var toastTimer;
+  function showToast(msg){
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 2600);
+  }
+
+  /* ---------------- update modal ---------------- */
+  var updateTimer;
+  function scheduleUpdatePrompt(){
+    clearTimeout(updateTimer);
+    updateTimer = setTimeout(openUpdateModal, 3200);
+  }
+  function openUpdateModal(){
+    var veil = document.getElementById('updateVeil');
+    var actions = document.getElementById('modalActions');
+    var copy = document.getElementById('modalCopy');
+    actions.innerHTML = '';
+    if(cond.keep){
+      copy.textContent = 'A new version of Nubo is ready. It adds sponsored posts to your feed. You can keep using your current, ad-free version if you’d rather not switch yet.';
+      var keepBtn = document.createElement('button');
+      keepBtn.className = 'btn ghost wide';
+      keepBtn.textContent = 'Keep My Version';
+      keepBtn.addEventListener('click', function(){ resolveUpdate(false); });
+      var updateBtn = document.createElement('button');
+      updateBtn.className = 'btn dark wide';
+      updateBtn.textContent = 'Update Now';
+      updateBtn.addEventListener('click', function(){ resolveUpdate(true); });
+      actions.appendChild(updateBtn);
+      actions.appendChild(keepBtn);
+    } else {
+      copy.textContent = 'This update is required to keep using Nubo. It adds sponsored posts to your feed, and will be installed now.';
+      var forceBtn = document.createElement('button');
+      forceBtn.className = 'btn dark wide';
+      forceBtn.textContent = 'Update Now';
+      forceBtn.addEventListener('click', function(){ resolveUpdate(true); });
+      actions.appendChild(forceBtn);
+    }
+    veil.classList.add('show');
+  }
+  function resolveUpdate(didUpdate){
+    document.getElementById('updateVeil').classList.remove('show');
+    if(didUpdate){
+      var spinnerVeil = document.getElementById('updatingVeil');
+      spinnerVeil.classList.add('show');
+      setTimeout(function(){
+        profile = Object.assign({}, DEFAULT_PROFILE, {name: profile.name || DEFAULT_PROFILE.name});
+        renderAvatar('feedAvatarHolder','feedRing', profile);
+        document.getElementById('feedName').textContent = profile.name;
+        buildFeed(true);
+        spinnerVeil.classList.remove('show');
+        showToast(wasCustomized
+          ? 'Updated — your custom profile was replaced, and sponsored posts now appear in your feed.'
+          : 'Updated — sponsored posts now appear in your feed.');
+      }, 900);
+    } else {
+      showToast('Kept your current version. Your feed stays ad-free.');
+    }
+  }
+
+  /* ---------------- flow control ---------------- */
+  function startFlow(){
+    wasCustomized = cond.customization;
+    if(cond.customization){
+      profile = { name:'', skin:SKINS[1], hairStyle:'short', hairColor:HAIR_COLORS[0], accessory:'none', ring:RINGS[0], interests:[] };
+      genderPicked = false;
+      document.querySelectorAll('#genderRow .opt-btn').forEach(function(b){ b.classList.remove('on'); });
+      document.getElementById('ageSel').value = '';
+      document.getElementById('nameInput').value = '';
+      buildInterestChips();
+      validateBasics();
+      showScreen('basics');
+    } else {
+      profile = Object.assign({}, DEFAULT_PROFILE);
+      renderAvatar('defaultAvatarHolder', null, profile);
+      showScreen('defaulting');
+      setTimeout(function(){ goToReview(); }, 1400);
+    }
+  }
+
+  function goToReview(){
+    document.getElementById('reviewTag').textContent = wasCustomized ? 'Step 3 of 3' : 'All set';
+    document.getElementById('reviewType').textContent = wasCustomized ? 'Customized by you' : 'Default (assigned)';
+    document.getElementById('reviewName').textContent = profile.name || DEFAULT_PROFILE.name;
+    document.getElementById('reviewSub').textContent = wasCustomized ? 'Custom avatar · ' + profile.interests.length + ' interests' : 'Standard Nubo profile';
+    renderAvatar('reviewAvatarHolder','reviewRing', profile);
+    var tagWrap = document.getElementById('reviewTags');
+    tagWrap.innerHTML = '';
+    (profile.interests.length ? profile.interests : DEFAULT_PROFILE.interests).forEach(function(i){
+      var c = document.createElement('div');
+      c.className = 'chip on';
+      c.textContent = i;
+      tagWrap.appendChild(c);
+    });
+    showScreen('review');
+  }
+
+  function enterFeed(){
+    document.getElementById('feedName').textContent = profile.name || DEFAULT_PROFILE.name;
+    renderAvatar('feedAvatarHolder','feedRing', profile);
+    buildFeed(false);
+    showScreen('feed');
+    scheduleUpdatePrompt();
+  }
+
+  /* ---------------- wire up basics screen ---------------- */
+  document.getElementById('ageSel').addEventListener('change', validateBasics);
+  document.querySelectorAll('#genderRow .opt-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('#genderRow .opt-btn').forEach(function(b){ b.classList.remove('on'); });
+      btn.classList.add('on');
+      genderPicked = true;
+      validateBasics();
+    });
+  });
+  document.getElementById('toAvatarBtn').addEventListener('click', function(){
+    renderAvatar('avatarSvgHolder','avatarRing', profile);
+    showScreen('avatar');
+  });
+
+  /* ---------------- wire up avatar screen ---------------- */
+  buildSwatches('skinRow', SKINS, 'skin', function(){ renderAvatar('avatarSvgHolder','avatarRing', profile); });
+  buildOptRow('hairStyleRow', HAIR_STYLES, 'hairStyle', function(){ renderAvatar('avatarSvgHolder','avatarRing', profile); });
+  buildSwatches('hairColorRow', HAIR_COLORS, 'hairColor', function(){ renderAvatar('avatarSvgHolder','avatarRing', profile); });
+  buildOptRow('accessoryRow', ACCESSORIES, 'accessory', function(){ renderAvatar('avatarSvgHolder','avatarRing', profile); });
+  buildSwatches('ringRow', RINGS, 'ring', function(){ renderAvatar('avatarSvgHolder','avatarRing', profile); });
+
+  document.querySelectorAll('.avatar-tab').forEach(function(tab){
+    tab.addEventListener('click', function(){
+      document.querySelectorAll('.avatar-tab').forEach(function(t){ t.classList.remove('on'); });
+      document.querySelectorAll('.avatar-pane').forEach(function(p){ p.classList.remove('on'); });
+      tab.classList.add('on');
+      document.querySelector('.avatar-pane[data-pane="'+tab.getAttribute('data-pane')+'"]').classList.add('on');
+    });
+  });
+
+  document.getElementById('nameInput').addEventListener('input', function(e){
+    profile.name = e.target.value;
+    validateAvatar();
+  });
+  document.getElementById('backToBasics').addEventListener('click', function(){ showScreen('basics'); });
+  document.getElementById('toReviewBtn').addEventListener('click', goToReview);
+
+  /* ---------------- other nav ---------------- */
+  document.getElementById('startBtn').addEventListener('click', startFlow);
+  document.getElementById('toFeedBtn').addEventListener('click', enterFeed);
+
+  /* ---------------- researcher controls ---------------- */
+  function paintSwitch(el, on){ el.classList.toggle('on', on); }
+  document.getElementById('swCustom').addEventListener('click', function(){
+    cond.customization = !cond.customization;
+    paintSwitch(this, cond.customization);
+    updateStatusChip();
+  });
+  document.getElementById('swKeep').addEventListener('click', function(){
+    cond.keep = !cond.keep;
+    paintSwitch(this, cond.keep);
+    updateStatusChip();
+  });
+  document.getElementById('restartBtn').addEventListener('click', function(){
+    clearTimeout(updateTimer);
+    document.getElementById('updateVeil').classList.remove('show');
+    showScreen('welcome');
+  });
+
+  /* ---------------- condition assignment from URL ---------------- */
+  // Query string (?c=1&k=0) is read for a normal deployment (e.g. GitHub Pages
+  // embedded from Qualtrics). Hash tokens (#cp-kp) are also supported so the
+  // four conditions can be previewed directly on a hosted artifact link, whose
+  // sandbox strips query strings but allows a plain #anchor.
+  function applyAssignment(){
+    var params = new URLSearchParams(location.search);
+    var c = params.get('c'), k = params.get('k');
+    if(c !== null && k !== null){
+      cond.customization = c === '1';
+      cond.keep = k === '1';
+      return true;
+    }
+    var hash = location.hash.replace('#','');
+    var HASH_MAP = {
+      'cp-kp': {customization:true,  keep:true},
+      'cp-ka': {customization:true,  keep:false},
+      'ca-kp': {customization:false, keep:true},
+      'ca-ka': {customization:false, keep:false}
+    };
+    if(HASH_MAP[hash]){
+      cond.customization = HASH_MAP[hash].customization;
+      cond.keep = HASH_MAP[hash].keep;
+      return true;
+    }
+    return false;
+  }
+
+  /* ---------------- init ---------------- */
+  var assigned = applyAssignment();
+  if(assigned){
+    var rig = document.querySelector('.rig');
+    if(rig) rig.style.display = 'none';
+    var chip = document.getElementById('statusChip');
+    if(chip) chip.style.display = 'none';
+  }
+  updateStatusChip();
+  renderAvatar('avatarSvgHolder', 'avatarRing', profile);
+})();
+</script>
