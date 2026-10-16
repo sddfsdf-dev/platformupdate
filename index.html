@@ -382,7 +382,7 @@
       <div class="step-head">
         <div class="tag">Step 2 of 3</div>
         <h3>Build your avatar</h3>
-        <p>Design how your profile looks to others.</p>
+        <p>Design how your profile looks to others. Choose a skin tone, hair, an extra and a theme color.</p>
       </div>
       <div class="step-scroll">
         <div class="avatar-preview">
@@ -392,6 +392,7 @@
           <span class="lbl">Display name</span>
           <input type="text" id="nameInput" placeholder="e.g. Rivermoss, Kai_29, Solstice&hellip;" maxlength="18">
         </label>
+        <div class="hint" id="avatarHint" style="margin:-4px 0 12px; font-size:12px;"></div>
         <div class="avatar-tabs">
           <div class="avatar-tab on" data-pane="skin">Skin</div>
           <div class="avatar-tab" data-pane="hair">Hair</div>
@@ -557,6 +558,13 @@
   var profile = { name:'', skin:SKINS[1], hairStyle:'short', hairColor:HAIR_COLORS[0], accessory:'none', ring:RINGS[0], interests:[] };
   var wasCustomized = false; // did THIS session actually go through customization
 
+  // Customization starts from a blank, neutral avatar (not the default profile),
+  // and every part must be chosen by the participant before continuing.
+  var BLANK_AVATAR = { skin:'#D5D8DE', hairStyle:'bald', hairColor:HAIR_COLORS[0], accessory:'none', ring:'#C9CDD4' };
+  var picked = { skin:false, hair:false, extra:false, theme:false };
+  var PICK_LABEL = { skin:'Skin', hair:'Hair', extra:'Extra', theme:'Theme' };
+  function markPicked(part){ picked[part] = true; validateAvatar(); }
+
   /* ---------------- avatar SVG builder ---------------- */
   function hairPath(style, color){
     if(style === 'bald') return '';
@@ -656,7 +664,6 @@
       });
       row.appendChild(d);
     });
-    row.children[0].classList.add('on');
   }
 
   function buildOptRow(containerId, items, key, onPick){
@@ -674,7 +681,6 @@
       });
       row.appendChild(d);
     });
-    row.children[0].classList.add('on');
   }
 
   function validateBasics(){
@@ -687,7 +693,15 @@
   var genderPicked = false;
 
   function validateAvatar(){
-    document.getElementById('toReviewBtn').disabled = !(profile.name && profile.name.trim().length >= 2);
+    var missing = Object.keys(picked).filter(function(k){ return !picked[k]; }).map(function(k){ return PICK_LABEL[k]; });
+    var nameOk = profile.name && profile.name.trim().length >= 2;
+    document.getElementById('toReviewBtn').disabled = !(nameOk && missing.length === 0);
+    var hint = document.getElementById('avatarHint');
+    if(hint){
+      var todo = missing.slice();
+      if(!nameOk) todo.unshift('a display name');
+      hint.textContent = todo.length ? 'Still to choose: ' + todo.join(', ') : 'Looks great!';
+    }
   }
 
   /* ---------------- feed ---------------- */
@@ -835,7 +849,10 @@
     wasCustomized = cond.customization;
     send('flow_start');
     if(cond.customization){
-      profile = { name:'', skin:SKINS[1], hairStyle:'short', hairColor:HAIR_COLORS[0], accessory:'none', ring:RINGS[0], interests:[] };
+      profile = Object.assign({}, BLANK_AVATAR, { name:'', interests:[] });
+      picked = { skin:false, hair:false, extra:false, theme:false };
+      buildAvatarPickers();
+      validateAvatar();
       genderPicked = false;
       document.querySelectorAll('#genderRow .opt-btn').forEach(function(b){ b.classList.remove('on'); });
       document.getElementById('ageSel').value = '';
@@ -844,10 +861,9 @@
       validateBasics();
       showScreen('basics');
     } else {
+      // No customization: skip profile setup and review, go straight into the feed.
       profile = Object.assign({}, DEFAULT_PROFILE);
-      renderAvatar('defaultAvatarHolder', null, profile);
-      showScreen('defaulting');
-      setTimeout(function(){ goToReview(); }, 1400);
+      enterFeed();
     }
   }
 
@@ -895,11 +911,15 @@
   });
 
   /* ---------------- wire up avatar screen ---------------- */
-  buildSwatches('skinRow', SKINS, 'skin', function(){ renderAvatar('avatarSvgHolder','avatarRing', profile); });
-  buildOptRow('hairStyleRow', HAIR_STYLES, 'hairStyle', function(){ renderAvatar('avatarSvgHolder','avatarRing', profile); });
-  buildSwatches('hairColorRow', HAIR_COLORS, 'hairColor', function(){ renderAvatar('avatarSvgHolder','avatarRing', profile); });
-  buildOptRow('accessoryRow', ACCESSORIES, 'accessory', function(){ renderAvatar('avatarSvgHolder','avatarRing', profile); });
-  buildSwatches('ringRow', RINGS, 'ring', function(){ renderAvatar('avatarSvgHolder','avatarRing', profile); });
+  function buildAvatarPickers(){
+    function r(){ renderAvatar('avatarSvgHolder','avatarRing', profile); }
+    buildSwatches('skinRow', SKINS, 'skin', function(){ r(); markPicked('skin'); });
+    buildOptRow('hairStyleRow', HAIR_STYLES, 'hairStyle', function(){ r(); markPicked('hair'); });
+    buildSwatches('hairColorRow', HAIR_COLORS, 'hairColor', function(){ r(); });
+    buildOptRow('accessoryRow', ACCESSORIES, 'accessory', function(){ r(); markPicked('extra'); });
+    buildSwatches('ringRow', RINGS, 'ring', function(){ r(); markPicked('theme'); });
+  }
+  buildAvatarPickers();
 
   document.querySelectorAll('.avatar-tab').forEach(function(tab){
     tab.addEventListener('click', function(){
