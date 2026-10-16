@@ -516,6 +516,16 @@
   /* ---------------- condition state ---------------- */
   var cond = { customization:true, keep:true };
 
+  /* ---------------- Qualtrics bridge ----------------
+     Sends progress and the update decision to the parent survey page
+     (Qualtrics) via postMessage. Harmless when the page is opened on its own. */
+  var T0 = Date.now(), updateShownAt = null;
+  function send(event, data){
+    var msg = Object.assign({ source:'nubo', event:event, t:Date.now()-T0,
+      c: cond.customization ? 1 : 0, k: cond.keep ? 1 : 0 }, data || {});
+    try { if(window.parent && window.parent !== window) window.parent.postMessage(msg, '*'); } catch(e){}
+  }
+
   /* ---------------- avatar option data ---------------- */
   var SKINS = ['#FFE0C2','#F4C2A1','#E0A574','#C68642','#8D5524','#4A2A17'];
   var HAIR_STYLES = [
@@ -793,9 +803,15 @@
       actions.appendChild(forceBtn);
     }
     veil.classList.add('show');
+    updateShownAt = Date.now();
+    send('update_shown');
   }
   function resolveUpdate(didUpdate){
     document.getElementById('updateVeil').classList.remove('show');
+    send('update_choice', { choice: didUpdate ? 'update' : 'keep',
+      decision_ms: updateShownAt ? Date.now()-updateShownAt : null });
+    // Let the participant see the result for a few seconds, then tell the survey it can move on.
+    setTimeout(function(){ send('done', { choice: didUpdate ? 'update' : 'keep' }); }, 5000);
     if(didUpdate){
       var spinnerVeil = document.getElementById('updatingVeil');
       spinnerVeil.classList.add('show');
@@ -817,6 +833,7 @@
   /* ---------------- flow control ---------------- */
   function startFlow(){
     wasCustomized = cond.customization;
+    send('flow_start');
     if(cond.customization){
       profile = { name:'', skin:SKINS[1], hairStyle:'short', hairColor:HAIR_COLORS[0], accessory:'none', ring:RINGS[0], interests:[] };
       genderPicked = false;
@@ -835,6 +852,8 @@
   }
 
   function goToReview(){
+    send('profile_done', { name_len: (profile.name||'').length,
+      n_interests: profile.interests ? profile.interests.length : 0 });
     document.getElementById('reviewTag').textContent = wasCustomized ? 'Step 3 of 3' : 'All set';
     document.getElementById('reviewType').textContent = wasCustomized ? 'Customized by you' : 'Default (assigned)';
     document.getElementById('reviewName').textContent = profile.name || DEFAULT_PROFILE.name;
@@ -856,6 +875,7 @@
     renderAvatar('feedAvatarHolder','feedRing', profile);
     buildFeed(false);
     showScreen('feed');
+    send('feed_enter');
     scheduleUpdatePrompt();
   }
 
@@ -952,10 +972,16 @@
   if(assigned){
     var rig = document.querySelector('.rig');
     if(rig) rig.style.display = 'none';
+    // Participants must not see the study title, description or footer (they reveal the manipulation).
+    var head = document.querySelector('.page-head');
+    if(head) head.style.display = 'none';
+    var foot = document.querySelector('footer.note');
+    if(foot) foot.style.display = 'none';
     var chip = document.getElementById('statusChip');
     if(chip) chip.style.display = 'none';
   }
   updateStatusChip();
   renderAvatar('avatarSvgHolder', 'avatarRing', profile);
+  send('loaded');
 })();
 </script>
