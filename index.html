@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <title>Nubo</title>
 <style>
   :root{
@@ -309,6 +310,18 @@
   .switch.on i{left:20px; background:var(--accent);}
   .rig-restart{margin-top:12px; width:100%; padding:9px; font-size:12px; border-radius:var(--radius-sm); border:1px solid var(--line); background:var(--surface-2); color:var(--ink-soft); font-weight:700;}
 
+  textarea{
+    width:100%; padding:11px 12px; border-radius:var(--radius-sm); resize:none;
+    border:1px solid var(--line); background:var(--surface-2); color:var(--ink);
+    font-family:inherit; font-size:14px; line-height:1.45; min-height:96px;
+  }
+  textarea:focus{outline:2px solid var(--accent); outline-offset:1px;}
+  .post.own-post{background:var(--accent-soft);}
+  .pin-badge{font-size:10.5px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--accent); margin-bottom:3px;}
+  .feed-top{background:var(--accent-soft); transition:background .2s;}
+  .review-post{margin-top:14px; background:var(--surface-2); border:1px solid var(--line); border-radius:var(--radius-md); padding:12px 14px; font-size:13px; line-height:1.45;}
+  .review-post .lbl{display:block; font-size:11px; font-weight:700; color:var(--ink-faint); margin-bottom:4px; text-transform:uppercase; letter-spacing:.05em;}
+
   footer.note{max-width:460px; text-align:center; font-size:11.5px; color:var(--ink-faint); padding-bottom:30px; line-height:1.6;}
 </style>
 
@@ -330,7 +343,7 @@
     <div class="welcome">
       <div class="logo-mark">N</div>
       <h2>Welcome to Nubo</h2>
-      <p>A new space to share what you're into. No email, no password &mdash; just set up how you want to show up.</p>
+      <p>A new space to share what you're into. No email, no password needed.</p>
       <button class="btn wide" id="startBtn" style="width:200px;">Get started</button>
     </div>
   </div>
@@ -339,7 +352,7 @@
   <div class="screen" data-screen="basics">
     <div class="step">
       <div class="step-head">
-        <div class="tag">Step 1 of 3</div>
+        <div class="tag">Step 1 of 4</div>
         <h3>Tell us a bit about you</h3>
         <p>This just shapes your profile &mdash; nothing here is used to identify you.</p>
       </div>
@@ -380,7 +393,7 @@
   <div class="screen" data-screen="avatar">
     <div class="step">
       <div class="step-head">
-        <div class="tag">Step 2 of 3</div>
+        <div class="tag">Step 2 of 4</div>
         <h3>Build your avatar</h3>
         <p>Design how your profile looks to others. Choose a skin tone, hair, an extra and a theme color.</p>
       </div>
@@ -416,7 +429,33 @@
     </div>
     <div class="footer">
       <button class="btn ghost" id="backToBasics">Back</button>
-      <button class="btn" id="toReviewBtn" disabled>Review profile</button>
+      <button class="btn" id="toReviewBtn" disabled>Next</button>
+    </div>
+  </div>
+
+  <!-- SPACE (customization present): name your home + first post -->
+  <div class="screen" data-screen="space">
+    <div class="step">
+      <div class="step-head">
+        <div class="tag">Step 3 of 4</div>
+        <h3>Make this space yours</h3>
+        <p>Give your Nubo home a name and share your first post. It will stay pinned at the top of your feed.</p>
+      </div>
+      <div class="step-scroll">
+        <label class="field">
+          <span class="lbl">Name your Nubo home</span>
+          <input type="text" id="spaceInput" maxlength="24" placeholder="e.g. Min's corner">
+        </label>
+        <label class="field">
+          <span class="lbl">Your first post</span>
+          <textarea id="postInput" maxlength="200" placeholder="Say hi, share what you're into, or what your day has been like&hellip;"></textarea>
+        </label>
+        <div class="hint" id="spaceHint" style="margin-top:-6px;"></div>
+      </div>
+    </div>
+    <div class="footer">
+      <button class="btn ghost" id="backToAvatar">Back</button>
+      <button class="btn" id="toReviewBtn2" disabled>Review</button>
     </div>
   </div>
 
@@ -433,7 +472,7 @@
   <div class="screen" data-screen="review">
     <div class="step">
       <div class="step-head">
-        <div class="tag" id="reviewTag">Step 3 of 3</div>
+        <div class="tag" id="reviewTag">Step 4 of 4</div>
         <h3>Your profile</h3>
         <p>Here's how you'll appear on Nubo.</p>
       </div>
@@ -449,7 +488,9 @@
         <div style="margin-top:18px;">
           <div class="summary-line"><span>Version</span><b>Nubo v1.0</b></div>
           <div class="summary-line"><span>Profile type</span><b id="reviewType">Customized</b></div>
+          <div class="summary-line"><span>Home name</span><b id="reviewSpace">&mdash;</b></div>
         </div>
+        <div class="review-post" id="reviewPostBox"><span class="lbl">Pinned post</span><span id="reviewPost"></span></div>
       </div>
     </div>
     <div class="footer">
@@ -464,7 +505,7 @@
       <div class="avatar-ring" style="width:34px;height:34px;padding:2px;" id="feedRing"><div id="feedAvatarHolder"></div></div>
       <div class="who">
         <h4 id="feedName">&mdash;</h4>
-        <span>Home feed</span>
+        <span id="feedSub">Home feed</span>
       </div>
     </div>
     <div class="feed-scroll" id="feedScroll"></div>
@@ -704,15 +745,96 @@
     }
   }
 
+  var MIN_POST = 20;
+  function validateSpace(){
+    var nameOk = spaceName.trim().length >= 2;
+    var postOk = firstPost.trim().length >= MIN_POST;
+    document.getElementById('toReviewBtn2').disabled = !(nameOk && postOk);
+    var todo = [];
+    if(!nameOk) todo.push('name your home');
+    if(!postOk) todo.push('write at least ' + MIN_POST + ' characters (' + firstPost.trim().length + '/' + MIN_POST + ')');
+    document.getElementById('spaceHint').textContent = todo.length ? 'Still to do: ' + todo.join(', ') : 'Looks great!';
+  }
+
   /* ---------------- feed ---------------- */
-  var FEED_POSTS = [
-    {name:'Kai Rivera', h:'coastalkai', t:'2h', body:"Tried a new trailhead this morning — the fog rolled in right as the sun came up. Worth the early alarm.", grad:'#0e9f8b', likes:24},
-    {name:'Mira Chen', h:'mira_codes', t:'3h', body:"Finally fixed the bug that's been haunting me for three days. It was a missing semicolon. Of course it was.", grad:'#5b8def', likes:33},
-    {name:'Theo Alvarez', h:'plantdad_theo', t:'5h', body:"My monstera decided to grow a new leaf overnight. Small wins.", grad:'#4c7a3f', likes:12},
-    {name:'Sam Park', h:'noodle_diaries', t:'6h', body:"Made cold sesame noodles from scratch for the first time — the sauce is doing a lot of heavy lifting.", grad:'#e6a817', likes:19},
-    {name:'Aria Ford', h:'river_reads', t:'9h', body:"Halfway through a novel that's quietly wrecking me. No spoilers, just — bring tissues.", grad:'#b15bff', likes:41},
-    {name:'Jun Park', h:'jun_runs', t:'1d', body:"Slow 5k this morning but a 5k is a 5k. Legs are jelly, mood is great.", grad:'#ff6b5b', likes:8}
-  ];
+  // Organic posts grouped by interest. The feed is built from the participant's
+  // chosen interests (customization) or from the default interests (no customization).
+  var POST_POOL = {
+    Music:[
+      {name:'Lena Ortiz', h:'lena_loops', body:"Found a record store that still lets you listen before you buy. Lost two hours in the jazz section.", grad:'#b15bff', likes:27},
+      {name:'Dev Shah', h:'devonkeys', body:"Learning the piano intro to my favorite song, one painfully slow bar at a time.", grad:'#5b8def', likes:14}],
+    Travel:[
+      {name:'Kai Rivera', h:'coastalkai', body:"Tried a new trailhead this morning — the fog rolled in right as the sun came up. Worth the early alarm.", grad:'#0e9f8b', likes:24},
+      {name:'Noor Haddad', h:'noor_wanders', body:"Missed my train, wandered into a tiny bakery instead. Best mistake of the trip.", grad:'#e6a817', likes:31}],
+    Fitness:[
+      {name:'Jun Park', h:'jun_runs', body:"Slow 5k this morning but a 5k is a 5k. Legs are jelly, mood is great.", grad:'#ff6b5b', likes:8},
+      {name:'Tess Moreau', h:'tess_lifts', body:"New personal best on deadlifts today. Celebrated with an entire bowl of pasta.", grad:'#4c7a3f', likes:22}],
+    Gaming:[
+      {name:'Riley Kim', h:'pixel_riley', body:"Spent forty minutes customizing my character and ten minutes actually playing. Priorities.", grad:'#5b8def', likes:36},
+      {name:'Omar Diaz', h:'omar_plays', body:"Finally beat the boss that's been destroying me all week. Hands still shaking.", grad:'#b15bff', likes:18}],
+    Art:[
+      {name:'Ines Duarte', h:'ines_sketches', body:"Filled the last page of my sketchbook today. Starting a new one feels weirdly emotional.", grad:'#ff8fb1', likes:29},
+      {name:'Felix Grant', h:'felix_paints', body:"Tried watercolor for the first time. It mostly did whatever it wanted, but I kind of love it.", grad:'#0e9f8b', likes:15}],
+    Food:[
+      {name:'Sam Park', h:'noodle_diaries', body:"Made cold sesame noodles from scratch for the first time — the sauce is doing a lot of heavy lifting.", grad:'#e6a817', likes:19},
+      {name:'Rosa Lima', h:'rosa_bakes', body:"Third attempt at sourdough and it finally has holes in the right places.", grad:'#ff6b5b', likes:34}],
+    Movies:[
+      {name:'Ethan Cole', h:'ethan_reels', body:"Rewatched a movie I loved as a kid. Still holds up, still cried at the same scene.", grad:'#3b5fb0', likes:21},
+      {name:'Maya Ito', h:'maya_frames', body:"Small theater, half-empty room, perfect film. Tuesday night well spent.", grad:'#b15bff', likes:12}],
+    Books:[
+      {name:'Aria Ford', h:'river_reads', body:"Halfway through a novel that's quietly wrecking me. No spoilers, just — bring tissues.", grad:'#b15bff', likes:41},
+      {name:'Ben Okafor', h:'ben_pages', body:"Library haul this week: four novels and one cookbook I will absolutely not cook from.", grad:'#4c7a3f', likes:17}],
+    Tech:[
+      {name:'Mira Chen', h:'mira_codes', body:"Finally fixed the bug that's been haunting me for three days. It was a missing semicolon. Of course it was.", grad:'#5b8def', likes:33},
+      {name:'Leo Brandt', h:'leo_builds', body:"Built a tiny weather display for my desk. It's mostly wrong, but it's mine.", grad:'#0e9f8b', likes:20}],
+    Fashion:[
+      {name:'Zoe Laurent', h:'zoe_threads', body:"Thrifted a jacket that fits like it was made for me. Five dollars. Unbeatable.", grad:'#ff8fb1', likes:38},
+      {name:'Ari Cohen', h:'ari_wears', body:"Trying to wear more color this fall. Today: one yellow sock. Baby steps.", grad:'#e6a817', likes:11}],
+    Sports:[
+      {name:'Marcus Hill', h:'marcus_hoops', body:"Pickup game went to overtime. My knees have filed a formal complaint.", grad:'#ff6b5b', likes:16},
+      {name:'Hana Sato', h:'hana_kicks', body:"Our rec league team finally won a game. We're basically champions now.", grad:'#3b5fb0', likes:25}],
+    Nature:[
+      {name:'Theo Alvarez', h:'plantdad_theo', body:"My monstera decided to grow a new leaf overnight. Small wins.", grad:'#4c7a3f', likes:12},
+      {name:'Ivy Brooks', h:'ivy_outdoors', body:"Saw a heron at the lake this morning. It stared at me like I owed it money.", grad:'#0e9f8b', likes:30}],
+    Photography:[
+      {name:'Nico Ruiz', h:'nico_shoots', body:"Golden hour hit the old brick wall downtown just right. Took sixty photos of a wall.", grad:'#e6a817', likes:26},
+      {name:'Elle Park', h:'elle_film', body:"Got my first roll of film developed. Half are blurry, all of them are perfect.", grad:'#ff8fb1', likes:23}],
+    Writing:[
+      {name:'Jonah Reid', h:'jonah_drafts', body:"Wrote 500 words today. Deleted 400. Progress is progress.", grad:'#3b5fb0', likes:13},
+      {name:'Cleo Barnes', h:'cleo_writes', body:"Started keeping a tiny journal — one sentence a day. Day 12 and still going.", grad:'#b15bff', likes:19}]
+  };
+  var POST_TIMES = ['2h','3h','5h','6h','9h','1d'];
+  function pickPosts(interests){
+    var list = (interests && interests.length ? interests : DEFAULT_PROFILE.interests).filter(function(i){ return POST_POOL[i]; });
+    var out = [], round = 0;
+    while(out.length < 6 && round < 2){
+      for(var i=0; i<list.length && out.length<6; i++){
+        var p = POST_POOL[list[i]][round];
+        if(p) out.push(p);
+      }
+      round++;
+    }
+    // Fewer than 6 (only possible with very few interests): top up from defaults.
+    DEFAULT_PROFILE.interests.forEach(function(i){
+      POST_POOL[i].forEach(function(p){ if(out.length < 6 && out.indexOf(p) === -1) out.push(p); });
+    });
+    return out.map(function(p, idx){ return Object.assign({}, p, {t: POST_TIMES[idx]}); });
+  }
+
+  // Customization-only state
+  var spaceName = '', firstPost = '';
+  var DEFAULT_SPACE = 'Nubo';
+
+  // Apply the chosen theme color to the whole app (customization only).
+  function applyTheme(hex){
+    var root = document.documentElement;
+    if(!hex){ ['--accent','--accent-soft','--accent-ink'].forEach(function(v){ root.style.removeProperty(v); }); return; }
+    var r = parseInt(hex.substr(1,2),16), g = parseInt(hex.substr(3,2),16), b = parseInt(hex.substr(5,2),16);
+    var lum = (0.299*r + 0.587*g + 0.114*b)/255;
+    root.style.setProperty('--accent', hex);
+    root.style.setProperty('--accent-soft', hex + '26');
+    root.style.setProperty('--accent-ink', lum > 0.62 ? '#1c1d1f' : '#ffffff');
+  }
 
   var AD_POSTS = [
     {brand:'Fernwell', body:"Sleep better tonight. Fernwell's herbal blend is trusted by over 2 million people worldwide.", grad:'#2f8f5b', cta:'Shop now'},
@@ -761,13 +883,37 @@
     return div;
   }
 
+  function ownPostEl(){
+    var div = document.createElement('div');
+    div.className = 'post own-post';
+    div.innerHTML =
+      '<div class="mini-av" style="background:'+profile.ring+'33;">'+avatarSVG(profile)+'</div>'+
+      '<div class="post-main">'+
+        '<div class="pin-badge">Pinned</div>'+
+        '<div class="post-head">'+
+          '<span class="pn"></span>'+
+          '<span class="pt">just now</span>'+
+        '</div>'+
+        '<div class="post-body"></div>'+
+      '</div>';
+    div.querySelector('.pn').textContent = profile.name;
+    div.querySelector('.post-body').textContent = firstPost;
+    return div;
+  }
+
+  // Ads (after the update) go directly under the first item of the feed
+  // (the participant's pinned post, or the first post when there is none),
+  // then after every second post. Same count and spacing in every condition.
   function buildFeed(withAds){
     var wrap = document.getElementById('feedScroll');
     wrap.innerHTML = '';
+    var items = [];
+    if(wasCustomized && firstPost) items.push(ownPostEl());
+    pickPosts(wasCustomized ? profile.interests : DEFAULT_PROFILE.interests).forEach(function(p){ items.push(organicPostEl(p)); });
     var adIdx = 0;
-    FEED_POSTS.forEach(function(p, i){
-      wrap.appendChild(organicPostEl(p));
-      if(withAds && (i + 1) % 2 === 0 && adIdx < AD_POSTS.length){
+    items.forEach(function(el, i){
+      wrap.appendChild(el);
+      if(withAds && adIdx < AD_POSTS.length && (i === 0 || i % 2 === 0)){
         wrap.appendChild(adPostEl(AD_POSTS[adIdx]));
         adIdx++;
       }
@@ -830,14 +976,10 @@
       var spinnerVeil = document.getElementById('updatingVeil');
       spinnerVeil.classList.add('show');
       setTimeout(function(){
-        profile = Object.assign({}, DEFAULT_PROFILE, {name: profile.name || DEFAULT_PROFILE.name});
-        renderAvatar('feedAvatarHolder','feedRing', profile);
-        document.getElementById('feedName').textContent = profile.name;
+        // The update only adds sponsored posts; the participant's profile stays exactly as it was.
         buildFeed(true);
         spinnerVeil.classList.remove('show');
-        showToast(wasCustomized
-          ? 'Updated — your custom profile was replaced, and sponsored posts now appear in your feed.'
-          : 'Updated — sponsored posts now appear in your feed.');
+        showToast('Updated — sponsored posts now appear in your feed.');
       }, 900);
     } else {
       showToast('Kept your current version. Your feed stays ad-free.');
@@ -851,6 +993,10 @@
     if(cond.customization){
       profile = Object.assign({}, BLANK_AVATAR, { name:'', interests:[] });
       picked = { skin:false, hair:false, extra:false, theme:false };
+      spaceName = ''; firstPost = '';
+      document.getElementById('spaceInput').value = '';
+      document.getElementById('postInput').value = '';
+      applyTheme(null);
       buildAvatarPickers();
       validateAvatar();
       genderPicked = false;
@@ -863,14 +1009,20 @@
     } else {
       // No customization: skip profile setup and review, go straight into the feed.
       profile = Object.assign({}, DEFAULT_PROFILE);
+      spaceName = ''; firstPost = '';
+      applyTheme(null);
       enterFeed();
     }
   }
 
   function goToReview(){
     send('profile_done', { name_len: (profile.name||'').length,
-      n_interests: profile.interests ? profile.interests.length : 0 });
-    document.getElementById('reviewTag').textContent = wasCustomized ? 'Step 3 of 3' : 'All set';
+      n_interests: profile.interests ? profile.interests.length : 0,
+      space_name: spaceName, post: firstPost, post_len: firstPost.trim().length });
+    document.getElementById('reviewSpace').textContent = spaceName || DEFAULT_SPACE;
+    document.getElementById('reviewPost').textContent = firstPost;
+    document.getElementById('reviewPostBox').style.display = firstPost ? '' : 'none';
+    document.getElementById('reviewTag').textContent = wasCustomized ? 'Step 4 of 4' : 'All set';
     document.getElementById('reviewType').textContent = wasCustomized ? 'Customized by you' : 'Default (assigned)';
     document.getElementById('reviewName').textContent = profile.name || DEFAULT_PROFILE.name;
     document.getElementById('reviewSub').textContent = wasCustomized ? 'Custom avatar · ' + profile.interests.length + ' interests' : 'Standard Nubo profile';
@@ -887,7 +1039,8 @@
   }
 
   function enterFeed(){
-    document.getElementById('feedName').textContent = profile.name || DEFAULT_PROFILE.name;
+    document.getElementById('feedName').textContent = (wasCustomized && spaceName) ? spaceName : DEFAULT_SPACE;
+    document.getElementById('feedSub').textContent = '@' + (profile.name || DEFAULT_PROFILE.name);
     renderAvatar('feedAvatarHolder','feedRing', profile);
     buildFeed(false);
     showScreen('feed');
@@ -917,7 +1070,7 @@
     buildOptRow('hairStyleRow', HAIR_STYLES, 'hairStyle', function(){ r(); markPicked('hair'); });
     buildSwatches('hairColorRow', HAIR_COLORS, 'hairColor', function(){ r(); });
     buildOptRow('accessoryRow', ACCESSORIES, 'accessory', function(){ r(); markPicked('extra'); });
-    buildSwatches('ringRow', RINGS, 'ring', function(){ r(); markPicked('theme'); });
+    buildSwatches('ringRow', RINGS, 'ring', function(){ r(); applyTheme(profile.ring); markPicked('theme'); });
   }
   buildAvatarPickers();
 
@@ -935,7 +1088,19 @@
     validateAvatar();
   });
   document.getElementById('backToBasics').addEventListener('click', function(){ showScreen('basics'); });
-  document.getElementById('toReviewBtn').addEventListener('click', goToReview);
+  document.getElementById('toReviewBtn').addEventListener('click', function(){
+    var inp = document.getElementById('spaceInput');
+    if(!spaceName && profile.name){ inp.placeholder = 'e.g. ' + profile.name.trim() + "'s corner"; }
+    validateSpace();
+    showScreen('space');
+  });
+  document.getElementById('spaceInput').addEventListener('input', function(e){ spaceName = e.target.value; validateSpace(); });
+  document.getElementById('postInput').addEventListener('input', function(e){ firstPost = e.target.value; validateSpace(); });
+  document.getElementById('backToAvatar').addEventListener('click', function(){ showScreen('avatar'); });
+  document.getElementById('toReviewBtn2').addEventListener('click', function(){
+    spaceName = spaceName.trim(); firstPost = firstPost.trim();
+    goToReview();
+  });
 
   /* ---------------- other nav ---------------- */
   document.getElementById('startBtn').addEventListener('click', startFlow);
