@@ -377,14 +377,10 @@
             <div class="opt-btn" data-val="Prefer not to say">Prefer not to say</div>
           </div>
         </label>
-        <label class="field" style="margin-bottom:6px;">
-          <span class="lbl">Pick a few interests (3+)</span>
-          <div class="chip-grid" id="interestGrid"></div>
-        </label>
       </div>
     </div>
     <div class="footer">
-      <span class="hint" id="basicsHint">Choose at least 3 interests</span>
+      <span class="hint" id="basicsHint">Choose your age range and gender</span>
       <button class="btn" id="toAvatarBtn" disabled>Next</button>
     </div>
   </div>
@@ -484,7 +480,6 @@
             <p id="reviewSub">&mdash;</p>
           </div>
         </div>
-        <div class="review-tags" id="reviewTags"></div>
         <div style="margin-top:18px;">
           <div class="summary-line"><span>Version</span><b>Nubo v1.0</b></div>
           <div class="summary-line"><span>Profile type</span><b id="reviewType">Customized</b></div>
@@ -584,19 +579,16 @@
   ];
   var RINGS = ['#0E9F8B','#FF6B5B','#5B8DEF','#E6A817','#B15BFF','#FF8FB1'];
 
-  var INTERESTS = ['Music','Travel','Fitness','Gaming','Art','Food','Movies','Books','Tech','Fashion','Sports','Nature','Photography','Writing'];
-
   var DEFAULT_PROFILE = {
     name:'nubo_user',
     skin: SKINS[1],
     hairStyle:'short',
     hairColor: HAIR_COLORS[0],
     accessory:'none',
-    ring: RINGS[0],
-    interests:['Music','Food','Travel']
+    ring: RINGS[0]
   };
 
-  var profile = { name:'', skin:SKINS[1], hairStyle:'short', hairColor:HAIR_COLORS[0], accessory:'none', ring:RINGS[0], interests:[] };
+  var profile = { name:'', skin:SKINS[1], hairStyle:'short', hairColor:HAIR_COLORS[0], accessory:'none', ring:RINGS[0] };
   var wasCustomized = false; // did THIS session actually go through customization
 
   // Customization starts from a blank, neutral avatar (not the default profile),
@@ -671,25 +663,6 @@
   }
 
   /* ---------------- build option pickers ---------------- */
-  function buildInterestChips(){
-    var grid = document.getElementById('interestGrid');
-    grid.innerHTML = '';
-    INTERESTS.forEach(function(name){
-      var c = document.createElement('div');
-      c.className = 'chip';
-      c.textContent = name;
-      c.tabIndex = 0;
-      c.addEventListener('click', function(){
-        c.classList.toggle('on');
-        var idx = profile.interests.indexOf(name);
-        if(c.classList.contains('on') && idx === -1) profile.interests.push(name);
-        if(!c.classList.contains('on') && idx !== -1) profile.interests.splice(idx,1);
-        validateBasics();
-      });
-      grid.appendChild(c);
-    });
-  }
-
   function buildSwatches(containerId, colors, key, onPick){
     var row = document.getElementById(containerId);
     row.innerHTML = '';
@@ -725,11 +698,9 @@
   }
 
   function validateBasics(){
-    var ok = document.getElementById('ageSel').value && genderPicked && profile.interests.length >= 3;
+    var ok = document.getElementById('ageSel').value && genderPicked;
     document.getElementById('toAvatarBtn').disabled = !ok;
-    document.getElementById('basicsHint').textContent = profile.interests.length >= 3
-      ? 'Looks good'
-      : 'Choose at least 3 interests';
+    document.getElementById('basicsHint').textContent = ok ? 'Looks good' : 'Choose your age range and gender';
   }
   var genderPicked = false;
 
@@ -757,69 +728,16 @@
   }
 
   /* ---------------- feed ---------------- */
-  // Organic posts grouped by interest. The feed is built from the participant's
-  // chosen interests (customization) or from the default interests (no customization).
-  var POST_POOL = {
-    Music:[
-      {name:'Lena Ortiz', h:'lena_loops', body:"Found a record store that still lets you listen before you buy. Lost two hours in the jazz section.", grad:'#b15bff', likes:27},
-      {name:'Dev Shah', h:'devonkeys', body:"Learning the piano intro to my favorite song, one painfully slow bar at a time.", grad:'#5b8def', likes:14}],
-    Travel:[
-      {name:'Kai Rivera', h:'coastalkai', body:"Tried a new trailhead this morning — the fog rolled in right as the sun came up. Worth the early alarm.", grad:'#0e9f8b', likes:24},
-      {name:'Noor Haddad', h:'noor_wanders', body:"Missed my train, wandered into a tiny bakery instead. Best mistake of the trip.", grad:'#e6a817', likes:31}],
-    Fitness:[
-      {name:'Jun Park', h:'jun_runs', body:"Slow 5k this morning but a 5k is a 5k. Legs are jelly, mood is great.", grad:'#ff6b5b', likes:8},
-      {name:'Tess Moreau', h:'tess_lifts', body:"New personal best on deadlifts today. Celebrated with an entire bowl of pasta.", grad:'#4c7a3f', likes:22}],
-    Gaming:[
-      {name:'Riley Kim', h:'pixel_riley', body:"Spent forty minutes customizing my character and ten minutes actually playing. Priorities.", grad:'#5b8def', likes:36},
-      {name:'Omar Diaz', h:'omar_plays', body:"Finally beat the boss that's been destroying me all week. Hands still shaking.", grad:'#b15bff', likes:18}],
-    Art:[
-      {name:'Ines Duarte', h:'ines_sketches', body:"Filled the last page of my sketchbook today. Starting a new one feels weirdly emotional.", grad:'#ff8fb1', likes:29},
-      {name:'Felix Grant', h:'felix_paints', body:"Tried watercolor for the first time. It mostly did whatever it wanted, but I kind of love it.", grad:'#0e9f8b', likes:15}],
-    Food:[
-      {name:'Sam Park', h:'noodle_diaries', body:"Made cold sesame noodles from scratch for the first time — the sauce is doing a lot of heavy lifting.", grad:'#e6a817', likes:19},
-      {name:'Rosa Lima', h:'rosa_bakes', body:"Third attempt at sourdough and it finally has holes in the right places.", grad:'#ff6b5b', likes:34}],
-    Movies:[
-      {name:'Ethan Cole', h:'ethan_reels', body:"Rewatched a movie I loved as a kid. Still holds up, still cried at the same scene.", grad:'#3b5fb0', likes:21},
-      {name:'Maya Ito', h:'maya_frames', body:"Small theater, half-empty room, perfect film. Tuesday night well spent.", grad:'#b15bff', likes:12}],
-    Books:[
-      {name:'Aria Ford', h:'river_reads', body:"Halfway through a novel that's quietly wrecking me. No spoilers, just — bring tissues.", grad:'#b15bff', likes:41},
-      {name:'Ben Okafor', h:'ben_pages', body:"Library haul this week: four novels and one cookbook I will absolutely not cook from.", grad:'#4c7a3f', likes:17}],
-    Tech:[
-      {name:'Mira Chen', h:'mira_codes', body:"Finally fixed the bug that's been haunting me for three days. It was a missing semicolon. Of course it was.", grad:'#5b8def', likes:33},
-      {name:'Leo Brandt', h:'leo_builds', body:"Built a tiny weather display for my desk. It's mostly wrong, but it's mine.", grad:'#0e9f8b', likes:20}],
-    Fashion:[
-      {name:'Zoe Laurent', h:'zoe_threads', body:"Thrifted a jacket that fits like it was made for me. Five dollars. Unbeatable.", grad:'#ff8fb1', likes:38},
-      {name:'Ari Cohen', h:'ari_wears', body:"Trying to wear more color this fall. Today: one yellow sock. Baby steps.", grad:'#e6a817', likes:11}],
-    Sports:[
-      {name:'Marcus Hill', h:'marcus_hoops', body:"Pickup game went to overtime. My knees have filed a formal complaint.", grad:'#ff6b5b', likes:16},
-      {name:'Hana Sato', h:'hana_kicks', body:"Our rec league team finally won a game. We're basically champions now.", grad:'#3b5fb0', likes:25}],
-    Nature:[
-      {name:'Theo Alvarez', h:'plantdad_theo', body:"My monstera decided to grow a new leaf overnight. Small wins.", grad:'#4c7a3f', likes:12},
-      {name:'Ivy Brooks', h:'ivy_outdoors', body:"Saw a heron at the lake this morning. It stared at me like I owed it money.", grad:'#0e9f8b', likes:30}],
-    Photography:[
-      {name:'Nico Ruiz', h:'nico_shoots', body:"Golden hour hit the old brick wall downtown just right. Took sixty photos of a wall.", grad:'#e6a817', likes:26},
-      {name:'Elle Park', h:'elle_film', body:"Got my first roll of film developed. Half are blurry, all of them are perfect.", grad:'#ff8fb1', likes:23}],
-    Writing:[
-      {name:'Jonah Reid', h:'jonah_drafts', body:"Wrote 500 words today. Deleted 400. Progress is progress.", grad:'#3b5fb0', likes:13},
-      {name:'Cleo Barnes', h:'cleo_writes', body:"Started keeping a tiny journal — one sentence a day. Day 12 and still going.", grad:'#b15bff', likes:19}]
-  };
-  var POST_TIMES = ['2h','3h','5h','6h','9h','1d'];
-  function pickPosts(interests){
-    var list = (interests && interests.length ? interests : DEFAULT_PROFILE.interests).filter(function(i){ return POST_POOL[i]; });
-    var out = [], round = 0;
-    while(out.length < 6 && round < 2){
-      for(var i=0; i<list.length && out.length<6; i++){
-        var p = POST_POOL[list[i]][round];
-        if(p) out.push(p);
-      }
-      round++;
-    }
-    // Fewer than 6 (only possible with very few interests): top up from defaults.
-    DEFAULT_PROFILE.interests.forEach(function(i){
-      POST_POOL[i].forEach(function(p){ if(out.length < 6 && out.indexOf(p) === -1) out.push(p); });
-    });
-    return out.map(function(p, idx){ return Object.assign({}, p, {t: POST_TIMES[idx]}); });
-  }
+  // The same six organic posts appear in every condition, in the same order,
+  // so feed content never differs between conditions.
+  var FEED_POSTS = [
+    {name:'Kai Rivera', h:'coastalkai', t:'2h', body:"Tried a new trailhead this morning — the fog rolled in right as the sun came up. Worth the early alarm.", grad:'#0e9f8b', likes:24},
+    {name:'Mira Chen', h:'mira_codes', t:'3h', body:"Finally fixed the bug that's been haunting me for three days. It was a missing semicolon. Of course it was.", grad:'#5b8def', likes:33},
+    {name:'Theo Alvarez', h:'plantdad_theo', t:'5h', body:"My monstera decided to grow a new leaf overnight. Small wins.", grad:'#4c7a3f', likes:12},
+    {name:'Sam Park', h:'noodle_diaries', t:'6h', body:"Made cold sesame noodles from scratch for the first time — the sauce is doing a lot of heavy lifting.", grad:'#e6a817', likes:19},
+    {name:'Aria Ford', h:'river_reads', t:'9h', body:"Halfway through a novel that's quietly wrecking me. No spoilers, just — bring tissues.", grad:'#b15bff', likes:41},
+    {name:'Jun Park', h:'jun_runs', t:'1d', body:"Slow 5k this morning but a 5k is a 5k. Legs are jelly, mood is great.", grad:'#ff6b5b', likes:8}
+  ];
 
   // Customization-only state
   var spaceName = '', firstPost = '';
@@ -909,7 +827,7 @@
     wrap.innerHTML = '';
     var items = [];
     if(wasCustomized && firstPost) items.push(ownPostEl());
-    pickPosts(wasCustomized ? profile.interests : DEFAULT_PROFILE.interests).forEach(function(p){ items.push(organicPostEl(p)); });
+    FEED_POSTS.forEach(function(p){ items.push(organicPostEl(p)); });
     var adIdx = 0;
     items.forEach(function(el, i){
       wrap.appendChild(el);
@@ -991,7 +909,7 @@
     wasCustomized = cond.customization;
     send('flow_start');
     if(cond.customization){
-      profile = Object.assign({}, BLANK_AVATAR, { name:'', interests:[] });
+      profile = Object.assign({}, BLANK_AVATAR, { name:'' });
       picked = { skin:false, hair:false, extra:false, theme:false };
       spaceName = ''; firstPost = '';
       document.getElementById('spaceInput').value = '';
@@ -1003,7 +921,6 @@
       document.querySelectorAll('#genderRow .opt-btn').forEach(function(b){ b.classList.remove('on'); });
       document.getElementById('ageSel').value = '';
       document.getElementById('nameInput').value = '';
-      buildInterestChips();
       validateBasics();
       showScreen('basics');
     } else {
@@ -1017,7 +934,6 @@
 
   function goToReview(){
     send('profile_done', { name_len: (profile.name||'').length,
-      n_interests: profile.interests ? profile.interests.length : 0,
       space_name: spaceName, post: firstPost, post_len: firstPost.trim().length });
     document.getElementById('reviewSpace').textContent = spaceName || DEFAULT_SPACE;
     document.getElementById('reviewPost').textContent = firstPost;
@@ -1025,16 +941,8 @@
     document.getElementById('reviewTag').textContent = wasCustomized ? 'Step 4 of 4' : 'All set';
     document.getElementById('reviewType').textContent = wasCustomized ? 'Customized by you' : 'Default (assigned)';
     document.getElementById('reviewName').textContent = profile.name || DEFAULT_PROFILE.name;
-    document.getElementById('reviewSub').textContent = wasCustomized ? 'Custom avatar · ' + profile.interests.length + ' interests' : 'Standard Nubo profile';
+    document.getElementById('reviewSub').textContent = wasCustomized ? 'Custom avatar' : 'Standard Nubo profile';
     renderAvatar('reviewAvatarHolder','reviewRing', profile);
-    var tagWrap = document.getElementById('reviewTags');
-    tagWrap.innerHTML = '';
-    (profile.interests.length ? profile.interests : DEFAULT_PROFILE.interests).forEach(function(i){
-      var c = document.createElement('div');
-      c.className = 'chip on';
-      c.textContent = i;
-      tagWrap.appendChild(c);
-    });
     showScreen('review');
   }
 
