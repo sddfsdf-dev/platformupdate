@@ -291,6 +291,16 @@
   .modal-sheet h3{font-size:17px; margin-bottom:6px;}
   .modal-sheet p{font-size:13px; color:var(--ink-soft); line-height:1.55; margin-bottom:16px;}
   .modal-actions{display:flex; flex-direction:column; gap:9px;}
+  /* Ad preview shown inside the update sheet (same in every condition) */
+  .update-preview{margin:-4px 0 16px;}
+  .update-preview .up-lbl{font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:7px;}
+  .update-preview .post.ad-post{border-radius:12px; border:2px solid #f0b429; padding:10px 12px 12px;}
+  .update-preview .post.ad-post .ad-banner{height:78px; padding:10px 12px; margin-bottom:0;}
+  .update-preview .post.ad-post .ad-banner b{font-size:16px;}
+  .update-preview .post.ad-post .ad-head{margin-bottom:8px;}
+  .update-preview .post.ad-post .ad-label{margin-bottom:8px;}
+  .update-preview .post.ad-post .post-body,
+  .update-preview .post.ad-post .cta{display:none;}
 
   .updating-veil{
     position:absolute; inset:0; background:var(--surface); z-index:25;
@@ -540,6 +550,7 @@
       <div class="modal-icon">&#8635;</div>
       <h3>Nubo has an update</h3>
       <p id="modalCopy">A new version of Nubo is ready, with smoother feeds and a refreshed look.</p>
+      <div class="update-preview" id="updatePreview"></div>
       <div class="modal-actions" id="modalActions"></div>
     </div>
   </div>
@@ -872,22 +883,18 @@
     return div;
   }
 
-  // Ads (after the update) go directly under the first item of the feed
-  // (the participant's pinned post, or the first post when there is none),
-  // then after every second post. Same count and spacing in every condition.
+  // After the update, ONE sponsored post (the same one shown in the update preview)
+  // goes directly under the first item of the feed: the participant's pinned post,
+  // or the first post when there is none. Identical in every condition.
   function buildFeed(withAds){
     var wrap = document.getElementById('feedScroll');
     wrap.innerHTML = '';
     var items = [];
     if(wasCustomized && firstPost) items.push(ownPostEl());
     FEED_POSTS.forEach(function(p){ items.push(organicPostEl(p)); });
-    var adIdx = 0;
     items.forEach(function(el, i){
       wrap.appendChild(el);
-      if(withAds && adIdx < AD_POSTS.length && (i === 0 || i % 2 === 0)){
-        wrap.appendChild(adPostEl(AD_POSTS[adIdx]));
-        adIdx++;
-      }
+      if(withAds && i === 0) wrap.appendChild(adPostEl(AD_POSTS[0]));
     });
     wrap.scrollTop = 0;
   }
@@ -913,6 +920,10 @@
     var actions = document.getElementById('modalActions');
     var copy = document.getElementById('modalCopy');
     actions.innerHTML = '';
+    // Everyone sees what a sponsored post will look like before deciding.
+    var prev = document.getElementById('updatePreview');
+    prev.innerHTML = '<div class="up-lbl">Preview: what the new version adds to your feed</div>';
+    prev.appendChild(adPostEl(AD_POSTS[0]));
     if(cond.keep){
       copy.textContent = 'A new version of Nubo is ready. It adds sponsored posts to your feed. You can keep using your current, ad-free version if you’d rather not switch yet.';
       var keepBtn = document.createElement('button');
