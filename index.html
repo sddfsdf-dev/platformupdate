@@ -291,6 +291,9 @@
   .modal-sheet h3{font-size:17px; margin-bottom:6px;}
   .modal-sheet p{font-size:13px; color:var(--ink-soft); line-height:1.55; margin-bottom:16px;}
   .modal-actions{display:flex; flex-direction:column; gap:9px;}
+  .auto-install{display:flex; align-items:center; justify-content:center; gap:9px; padding:11px; border-radius:999px;
+    background:var(--surface-2); color:var(--ink-soft); font-size:13px; font-weight:700;}
+  .auto-install .mini-spin{width:14px; height:14px; border-radius:999px; border:2px solid var(--line); border-top-color:var(--ink-soft); animation:spin .7s linear infinite;}
   /* Ad preview shown inside the update sheet (same in every condition) */
   .update-preview{margin:-4px 0 16px;}
   .update-preview .up-lbl{font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:7px;}
@@ -928,7 +931,7 @@
       copy.textContent = 'A new version of Nubo is ready. It adds sponsored posts to your feed. You can keep using your current, ad-free version if you’d rather not switch yet.';
       var keepBtn = document.createElement('button');
       keepBtn.className = 'btn ghost wide';
-      keepBtn.textContent = 'Keep My Version';
+      keepBtn.textContent = 'Keep Current Version (No Ads)';
       keepBtn.addEventListener('click', function(){ resolveUpdate(false); });
       var updateBtn = document.createElement('button');
       updateBtn.className = 'btn dark wide';
@@ -938,11 +941,12 @@
       actions.appendChild(keepBtn);
     } else {
       copy.textContent = 'This update is required to keep using Nubo. It adds sponsored posts to your feed, and will be installed now.';
-      var forceBtn = document.createElement('button');
-      forceBtn.className = 'btn dark wide';
-      forceBtn.textContent = 'Update Now';
-      forceBtn.addEventListener('click', function(){ resolveUpdate(true); });
-      actions.appendChild(forceBtn);
+      // No choice: no button. The notice stays for 3 seconds, then the update installs automatically.
+      var auto = document.createElement('div');
+      auto.className = 'auto-install';
+      auto.innerHTML = '<span class="mini-spin"></span><span>Installing automatically…</span>';
+      actions.appendChild(auto);
+      setTimeout(function(){ resolveUpdate(true); }, 3000);
     }
     veil.classList.add('show');
     updateShownAt = Date.now();
